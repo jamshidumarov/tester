@@ -282,7 +282,7 @@
 <div id="start-screen">
   <div class="start-card">
     <h1>📝 Test Tizimi</h1>
-    <p class="subtitle">Menejment 2024-2025 &nbsp;|&nbsp; 710 ta savol</p>
+    <p class="subtitle">Menejment 2024-2025 &nbsp;|&nbsp; <span id="totalQCount">...</span> ta savol</p>
 
     <div class="form-row">
       <div class="form-group">
@@ -297,8 +297,8 @@
     <div class="form-row">
       <div class="form-group">
         <label>Savollar soni</label>
-        <input id="questionCount" type="number" value="20" min="1" max="710" />
-        <small>1 – 710</small>
+        <input id="questionCount" type="number" value="20" min="1" max="9999" />
+        <small>1 – <span id="totalQCountSmall">...</span></small>
       </div>
       <div class="form-group">
         <label>Vaqt (daqiqa)</label>
@@ -631,7 +631,7 @@
     return fetch(BASE_URL + url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
   }
 
-  const BASE_URL   = 'http://localhost:8085';
+  const BASE_URL   = window.location.origin;
   const STORAGE_KEY = 'testSession';
 
   const id  = s => document.getElementById(s);
@@ -858,6 +858,21 @@
   }
 
   /* ═══════════ INIT ═══════════ */
+  async function loadQuestionCount() {
+    try {
+      const res  = await fetch(`${BASE_URL}/api/questions?page=0&size=1`);
+      const data = await res.json();
+      const total = data.totalElements ?? '?';
+      id('totalQCount').textContent      = total;
+      id('totalQCountSmall').textContent = total;
+      id('questionCount').max            = total;
+    } catch {
+      id('totalQCount').textContent      = '?';
+      id('totalQCountSmall').textContent = '?';
+    }
+  }
+
+  loadQuestionCount();
   tryRestoreSession();
 
   /* Enter bilan test boshlash */
