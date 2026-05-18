@@ -8,7 +8,15 @@ import java.util.List;
 
 @Entity
 @Table(name = "user_answers",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"session_id", "question_id"}))
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_user_answer_session_question",
+                columnNames = {"session_id", "question_id"}
+        ),
+        indexes = {
+                // Unique constraint (session_id, question_id) birinchi ustun bo'lgani uchun
+                // findBySessionId uchun alohida index shart emas — composite index ishlaydi
+                @Index(name = "idx_ua_question_id", columnList = "question_id")
+        })
 @Getter
 @Setter
 @Builder
@@ -29,7 +37,11 @@ public class UserAnswer {
     private Question question;
 
     @ElementCollection
-    @CollectionTable(name = "user_answer_options", joinColumns = @JoinColumn(name = "user_answer_id"))
+    @CollectionTable(
+            name = "user_answer_options",
+            joinColumns = @JoinColumn(name = "user_answer_id"),
+            indexes = @Index(name = "idx_uao_user_answer_id", columnList = "user_answer_id")
+    )
     @Column(name = "option_id")
     @Builder.Default
     private List<Long> selectedOptionIds = new ArrayList<>();

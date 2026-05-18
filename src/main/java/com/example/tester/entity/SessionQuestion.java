@@ -4,7 +4,11 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "session_questions")
+@Table(name = "session_questions", indexes = {
+        // findBySessionIdWithQuestionsAndOptions — session_id + display_order bo'yicha
+        @Index(name = "idx_sq_session_order",  columnList = "session_id, display_order"),
+        @Index(name = "idx_sq_question_id",    columnList = "question_id")
+})
 @Getter
 @Setter
 @Builder

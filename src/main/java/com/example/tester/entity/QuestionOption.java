@@ -4,7 +4,12 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "question_options")
+@Table(name = "question_options", indexes = {
+        // JOIN FETCH q.options va calculateResults uchun asosiy index
+        @Index(name = "idx_option_question_id",         columnList = "question_id"),
+        // To'g'ri javoblarni saralash uchun qo'shimcha index
+        @Index(name = "idx_option_question_id_correct", columnList = "question_id, correct")
+})
 @Getter
 @Setter
 @Builder
