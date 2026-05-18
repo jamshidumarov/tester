@@ -4,11 +4,27 @@ services:
     image: ${DOCKERHUB_USERNAME}/tester:latest
     container_name: tester-app
     restart: unless-stopped
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    depends_on:
+      - db
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/tester
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/tester
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-root123}
     ports:
       - "8085:8085"
+
+  db:
+    image: postgres:16
+    container_name: postgresql-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tester
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-root123}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
