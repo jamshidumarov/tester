@@ -4,8 +4,14 @@ services:
     container_name: tester-app
     restart: unless-stopped
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://172.18.0.2:5432/tester?sslmode=disable
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql-db:5432/tester?sslmode=disable
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-root123}
     ports:
       - "8085:8085"
+    networks:
+      - leetcode_challenge_default
+
+networks:
+  leetcode_challenge_default:
+    external: true
