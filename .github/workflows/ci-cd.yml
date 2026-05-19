@@ -81,12 +81,14 @@ jobs:
           script: |
             cd /opt/projects/tester
 
-            # .env faylida DOCKERHUB_USERNAME o'rnatilgan bo'lishi kerak
+            # Yangi imageni pull qilish
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/tester:latest
 
-            docker-compose down
-            docker-compose up -d
+            # Containerni restart qilish
+            docker compose down
+            docker compose up -d
 
+            # Eski imagelarni tozalash
             docker image prune -f
 
             echo "✅ Deploy muvaffaqiyatli!"
