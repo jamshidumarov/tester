@@ -8,7 +8,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "questions", indexes = {
-        @Index(name = "idx_question_type", columnList = "type")
+        @Index(name = "idx_question_type", columnList = "type"),
+        @Index(name = "idx_question_subject_id", columnList = "subject_id")
 })
 @Getter
 @Setter
@@ -27,6 +28,10 @@ public class Question {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private QuestionType type;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subject_id")
+    private Subject subject;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default

@@ -32,7 +32,10 @@ public class TestService {
     private final UserAnswerRepository userAnswerRepository;
 
     public StartTestResponse startTest(StartTestRequest request) {
-        long totalAvailable = questionRepository.count();
+        long totalAvailable = request.subjectId() != null
+                ? questionRepository.countBySubjectId(request.subjectId())
+                : questionRepository.count();
+
         if (request.questionCount() > totalAvailable) {
             throw AppException.badRequest(
                     "Bazada faqat " + totalAvailable + " ta savol mavjud, " +
@@ -40,7 +43,9 @@ public class TestService {
         }
 
         // Random savollarni olish (faqat ID lar)
-        List<Question> randomQuestions = questionRepository.findRandomQuestions(request.questionCount());
+        List<Question> randomQuestions = request.subjectId() != null
+                ? questionRepository.findRandomQuestionsBySubjectId(request.questionCount(), request.subjectId())
+                : questionRepository.findRandomQuestions(request.questionCount());
         List<Long> ids = randomQuestions.stream().map(Question::getId).toList();
 
         // Savol variantlarini (options) ham bir queryda yuklash — N+1 muammosidan saqlanish

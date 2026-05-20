@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Test Tizimi — Menejment</title>
+  <title>Test Tizimi</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f1f5f9; color: #1e293b; min-height: 100vh; }
@@ -178,6 +178,14 @@
     }
     .btn-secondary:hover { background: #dbeafe; border-color: #93c5fd; }
 
+    /* ───────────── SUBJECT SELECT ───────────── */
+    .form-group select {
+      width: 100%; padding: 10px 13px; border: 1.5px solid #e2e8f0;
+      border-radius: 8px; font-size: 15px; color: #1e293b;
+      background: #fff; transition: border-color .2s; cursor: pointer;
+    }
+    .form-group select:focus { outline: none; border-color: #2563eb; }
+
     /* ───────────── SHARED NAV BAR ───────────── */
     .nav-bar {
       background: #1e40af; color: #fff;
@@ -282,8 +290,14 @@
 <div id="start-screen">
   <div class="start-card">
     <h1>📝 Test Tizimi</h1>
-    <p class="subtitle">Menejment 2024-2025 &nbsp;|&nbsp; <span id="totalQCount">...</span> ta savol</p>
+    <p class="subtitle"><span id="subtitleSubject">Yuklanmoqda...</span> &nbsp;|&nbsp; <span id="totalQCount">...</span> ta savol</p>
 
+    <div class="form-group">
+      <label>Fan</label>
+      <select id="subjectSelect" onchange="onSubjectChange()">
+        <option value="">Barcha fanlar</option>
+      </select>
+    </div>
     <div class="form-row">
       <div class="form-group">
         <label>Ism</label>
@@ -360,6 +374,9 @@
     <span class="nav-meta" id="studyMeta"></span>
   </div>
   <div class="study-toolbar">
+    <select id="studySubjectFilter" onchange="loadStudyQuestions(0)" style="padding:9px 13px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;background:#fff;cursor:pointer;">
+      <option value="">Barcha fanlar</option>
+    </select>
     <input id="studySearch" type="text" placeholder="Savol bo'yicha qidirish..."
       onkeydown="if(event.key==='Enter') loadStudyQuestions(0)" />
     <button onclick="loadStudyQuestions(0)">Qidirish</button>
@@ -417,13 +434,16 @@
   let questions  = [];
   let timerRef   = null;
   let timeLeft   = 0;
+  let subjects   = [];
 
   /* ═══════════ START ═══════════ */
   async function startTest() {
-    const firstName       = v('firstName');
-    const lastName        = v('lastName');
-    const questionCount   = parseInt(v('questionCount'));
+    const firstName        = v('firstName');
+    const lastName         = v('lastName');
+    const questionCount    = parseInt(v('questionCount'));
     const timeLimitMinutes = parseInt(v('timeLimitMinutes'));
+    const subjectIdVal     = id('subjectSelect').value;
+    const subjectId        = subjectIdVal ? parseInt(subjectIdVal) : null;
 
     if (!firstName || !lastName)       return setErr('Ism va familiyani kiriting');
     if (!questionCount || questionCount < 1) return setErr('Savollar sonini to\'g\'ri kiriting');
@@ -434,7 +454,7 @@
     btn.disabled = true; btn.textContent = 'Yuklanmoqda...';
 
     try {
-      const res  = await post('/api/tests/start', { firstName, lastName, questionCount, timeLimitMinutes });
+      const res  = await post('/api/tests/start', { firstName, lastName, questionCount, timeLimitMinutes, subjectId });
       const data = await res.json();
       if (!res.ok) { setErr(data.message || 'Xato yuz berdi'); return; }
 
@@ -701,13 +721,61 @@
     }
   }
 
+  /* ═══════════ SUBJECTS ═══════════ */
+  async function loadSubjects() {
+    try {
+      const res = await fetch(`${BASE_URL}/api/subjects`);
+      subjects = await res.json();
+
+      const startSel = id('subjectSelect');
+      const studySel = id('studySubjectFilter');
+
+      subjects.forEach(s => {
+        startSel.innerHTML += `<option value="${s.id}">${s.name} (${s.questionCount} ta savol)</option>`;
+        studySel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+      });
+
+      if (subjects.length === 1) {
+        startSel.value = subjects[0].id;
+        onSubjectChange();
+      } else {
+        updateSubtitle(null);
+        loadQuestionCount();
+      }
+    } catch {
+      updateSubtitle(null);
+      loadQuestionCount();
+    }
+  }
+
+  function onSubjectChange() {
+    const val = id('subjectSelect').value;
+    const selected = subjects.find(s => String(s.id) === val);
+    if (selected) {
+      updateSubtitle(selected);
+      id('totalQCount').textContent      = selected.questionCount;
+      id('totalQCountSmall').textContent = selected.questionCount;
+      id('questionCount').max            = selected.questionCount;
+    } else {
+      updateSubtitle(null);
+      loadQuestionCount();
+    }
+  }
+
+  function updateSubtitle(subject) {
+    const sub = subject ? subject.name : 'Barcha fanlar';
+    id('subtitleSubject').textContent = sub;
+  }
+
   /* ═══════════ QUESTIONS STUDY ═══════════ */
   let studyPage = 0;
 
   async function loadStudyQuestions(page) {
     studyPage = page;
-    const search = id('studySearch').value.trim();
-    const params = new URLSearchParams({ page, size: 20, search });
+    const search    = id('studySearch').value.trim();
+    const subjectId = id('studySubjectFilter').value;
+    const params    = new URLSearchParams({ page, size: 20, search });
+    if (subjectId) params.append('subjectId', subjectId);
 
     id('studyWrap').innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">Yuklanmoqda...</div>';
     id('studyPagination').innerHTML = '';
@@ -872,7 +940,7 @@
     }
   }
 
-  loadQuestionCount();
+  loadSubjects();
   tryRestoreSession();
 
   /* Enter bilan test boshlash */

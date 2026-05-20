@@ -15,5 +15,7 @@ public record StartTestRequest(
         int questionCount,
 
         @Min(value = 1, message = "Vaqt limiti kamida 1 daqiqa bo'lishi kerak")
-        int timeLimitMinutes
+        int timeLimitMinutes,
+
+        Long subjectId
 ) {}

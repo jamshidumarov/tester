@@ -28,9 +28,10 @@ public class StudyController {
     public ResponseEntity<StudyPageResponse> getQuestions(
             @Parameter(description = "Sahifa raqami (0 dan boshlanadi)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Sahifadagi savollar soni (max 100)")  @RequestParam(defaultValue = "20") int size,
-            @Parameter(description = "Savol matni bo'yicha qidiruv")        @RequestParam(defaultValue = "") String search) {
+            @Parameter(description = "Savol matni bo'yicha qidiruv")        @RequestParam(defaultValue = "") String search,
+            @Parameter(description = "Fan ID bo'yicha filtrlash")           @RequestParam(required = false) Long subjectId) {
         size = Math.min(size, 100);
-        return ResponseEntity.ok(questionService.getStudyQuestions(page, size, search));
+        return ResponseEntity.ok(questionService.getStudyQuestions(page, size, search, subjectId));
     }
 
     @Operation(summary = "O'tgan natijalarni qidirish",

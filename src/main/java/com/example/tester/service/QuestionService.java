@@ -73,10 +73,17 @@ public class QuestionService {
     }
 
     @Transactional(readOnly = true)
-    public StudyPageResponse getStudyQuestions(int page, int size, String search) {
-        List<Question> filtered = (search == null || search.isBlank())
-                ? questionRepository.findAll()
-                : questionRepository.findByTextContaining(search.trim());
+    public StudyPageResponse getStudyQuestions(int page, int size, String search, Long subjectId) {
+        List<Question> filtered;
+        if (subjectId != null) {
+            filtered = (search == null || search.isBlank())
+                    ? questionRepository.findBySubjectId(subjectId)
+                    : questionRepository.findBySubjectIdAndTextContaining(subjectId, search.trim());
+        } else {
+            filtered = (search == null || search.isBlank())
+                    ? questionRepository.findAll()
+                    : questionRepository.findByTextContaining(search.trim());
+        }
 
         int total = filtered.size();
         int totalPages = total == 0 ? 0 : (int) Math.ceil((double) total / size);
